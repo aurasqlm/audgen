@@ -19,7 +19,7 @@
     <span> | </span>
     <a href="request.html">Request API</a>
     <span> | </span>
-    <a href="https://github.com/your-username/audgen/issues">Report Bug</a>
+    <a href="https://github.com/aurasqlm/audgen/issues">Report Bug</a>
   </h3>
 </div>
 
@@ -67,7 +67,7 @@ Audgen is a client-side application. You can run it locally with any static serv
 
 1.  **Clone the repository**
     ```bash
-    git clone [https://github.com/your-username/audgen.git](https://github.com/your-username/audgen.git)
+    git clone [https://github.com/aurasqlm/audgen.git](https://github.com/aurasqlm/audgen.git)
     cd audgen
     ```
 
