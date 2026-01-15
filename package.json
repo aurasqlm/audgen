@@ -1,0 +1,13 @@
+{
+  "name": "audgen",
+  "version": "1.0.0",
+  "description": "Audgen Audio Synthesis Platform",
+  "main": "index.html",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy ."
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Studio | Audgen</title>
+    <link rel="shortcut icon" href="assets/cropped-logo.png" type="image/x-icon">
+    <meta name="description" content="Generate ultra-realistic AI audio using the Audgen Studio.">
+    
+    <style>
+        /* =========================================
+           1. INHERITED CORE STYLES
+           ========================================= */
+        :root {
+            --bg-color: #0b0d11;
+            --surface-color: #15181e;
+            --surface-hover: #1e222b;
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #2d313a;
+            --glow-primary: rgba(99, 102, 241, 0.4);
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --container-width: 1100px;
+            --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: var(--container-width); margin: 0 auto; padding: 0 20px; }
+        a { text-decoration: none; color: inherit; transition: color 0.2s; }
+        ul { list-style: none; }
+
+        /* Navigation (Preserved) */
+        header {
+            position: fixed; top: 0; left: 0; right: 0; height: 70px;
+            background-color: rgba(11, 13, 17, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            display: flex; align-items: center;
+        }
+        .nav-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .logo { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; color: white; }
+        .logo-img { height: 40px; width: 40px; border-radius: 50%; object-fit: cover; }
+        nav ul { display: flex; gap: 30px; }
+        nav a { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
+        nav a:hover, nav a.active { color: var(--text-main); text-shadow: 0 0 8px rgba(255,255,255,0.3); }
+        nav a.active { color: var(--primary-color); }
+        
+        .mobile-menu-btn { display: none; background: none; border: none; flex-direction: column; gap: 5px; cursor: pointer; }
+        .hamburger-line { width: 24px; height: 2px; background-color: white; transition: 0.3s; }
+
+        /* =========================================
+           2. STUDIO PAGE LAYOUT
+           ========================================= */
+        
+        main { padding-top: 100px; padding-bottom: 80px; min-height: 100vh; position: relative; }
+
+        /* Dynamic Background */
+        .studio-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden;
+        }
+        .orb {
+            position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4;
+            animation: orbFloat 10s infinite alternate;
+        }
+        .orb-1 { top: 20%; left: 20%; width: 300px; height: 300px; background: var(--primary-color); }
+        .orb-2 { bottom: 20%; right: 20%; width: 400px; height: 400px; background: #4f46e5; animation-delay: -5s; }
+
+        @keyframes orbFloat { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, -30px); } }
+
+        /* Studio Grid */
+        .studio-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+            margin-top: 20px;
+            opacity: 0;
+            animation: fadeInUp 0.8s var(--ease-smooth) forwards;
+        }
+
+        /* Common Panel Style */
+        .panel {
+            background: rgba(21, 24, 30, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .panel:focus-within {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.4);
+        }
+
+        /* Sidebar Controls */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        
+        .control-group { margin-bottom: 20px; }
+        .control-group:last-child { margin-bottom: 0; }
+        .label {
+            display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);
+            margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        
+        /* Custom Inputs */
+        .input-box {
+            width: 100%; background: #0f1115; border: 1px solid var(--border-color);
+            color: white; padding: 12px; border-radius: var(--radius-md); font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .input-box:focus { border-color: var(--primary-color); background: var(--surface-hover); }
+
+        /* Range Slider */
+        .range-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        input[type=range] {
+            flex: 1; -webkit-appearance: none; background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; background: var(--border-color); border-radius: 2px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
+            background: var(--primary-color); margin-top: -6px; cursor: pointer;
+            box-shadow: 0 0 10px var(--glow-primary); transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .range-val { font-family: monospace; font-size: 0.9rem; color: var(--primary-color); width: 35px; text-align: right; }
+
+        /* Main Workspace */
+        .workspace { display: flex; flex-direction: column; gap: 20px; }
+
+        .text-editor-container {
+            position: relative; height: 100%; display: flex; flex-direction: column;
+        }
+        
+        .text-editor {
+            flex: 1; width: 100%; min-height: 250px;
+            background: transparent; border: none; color: var(--text-main);
+            font-size: 1.1rem; resize: none; line-height: 1.7;
+            font-family: inherit;
+        }
+        .text-editor::placeholder { color: rgba(156, 163, 175, 0.5); }
+        
+        .char-counter {
+            position: absolute; bottom: 0; right: 0;
+            font-size: 0.8rem; color: var(--text-muted);
+            padding: 4px 8px; background: rgba(0,0,0,0.3); border-radius: 4px;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid var(--border-color); padding-top: 20px;
+        }
+
+        .btn-gen {
+            background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+            color: white; border: none; padding: 12px 32px;
+            font-size: 1rem; font-weight: 600; border-radius: var(--radius-md);
+            cursor: pointer; position: relative; overflow: hidden;
+            display: flex; align-items: center; gap: 10px;
+            transition: transform 0.2s; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+        .btn-gen:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(99, 102, 241, 0.5); }
+        .btn-gen:disabled { opacity: 0.7; cursor: not-allowed; transform: none; filter: grayscale(0.5); }
+
+        /* Loading Animation inside button */
+        .loader {
+            width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%;
+            animation: spin 0.8s linear infinite; display: none;
+        }
+        .btn-gen.loading .loader { display: block; }
+        .btn-gen.loading span { opacity: 0.8; }
+
+        /* =========================================
+           3. CUSTOM AUDIO PLAYER
+           ========================================= */
+        
+        .player-wrapper {
+            margin-top: 24px;
+            background: #000;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 66px 60px;
+            display: flex; align-items: center; gap: 20px;
+            opacity: 0; transform: translateY(20px);
+            transition: all 0.5s var(--ease-elastic);
+            position: relative;
+            overflow: hidden;
+        }
+        .player-wrapper.visible { opacity: 1; transform: translateY(0); }
+        
+        /* Audio visualizer glow */
+        .player-wrapper::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 5px; height: 100%;
+            background: var(--primary-color);
+            box-shadow: 0 0 15px var(--primary-color);
+        }
+
+        .play-btn {
+            background: var(--surface-hover); border: 1px solid var(--border-color);
+            width: 45px; height: 45px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: white; transition: 0.2s; flex-shrink: 0;
+        }
+        .play-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        
+        .track-info { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 5px; }
+        .track-title { font-size: 0.9rem; font-weight: 600; color: white; }
+        
+        /* Custom Progress Bar */
+        .progress-container {
+            width: 100%; height: 6px; background: rgba(255,255,255,0.1);
+            border-radius: 3px; cursor: pointer; position: relative;
+        }
+        .progress-fill {
+            height: 100%; background: var(--primary-color); width: 0%;
+            border-radius: 3px; position: relative;
+            transition: width 0.1s linear;
+        }
+        /* Scrubber head */
+        .progress-fill::after {
+            content: ''; position: absolute; right: -4px; top: -3px;
+            width: 12px; height: 12px; background: white; border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5); transform: scale(0); transition: transform 0.2s;
+        }
+        .progress-container:hover .progress-fill::after { transform: scale(1); }
+
+        .time-stamp { font-size: 0.75rem; color: var(--text-muted); margin-left: 10px; font-family: monospace; min-width: 80px; text-align: right; }
+
+        /* Menu Button */
+        .menu-wrapper { position: relative; }
+        .menu-btn {
+            background: none; border: none; color: var(--text-muted); cursor: pointer;
+            padding: 8px; border-radius: 4px; transition: 0.2s;
+        }
+        .menu-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+        
+        .dropdown {
+            position: absolute; bottom: 120%; right: 0;
+            background: var(--surface-color); border: 1px solid var(--border-color);
+            border-radius: var(--radius-md); padding: 5px;
+            width: 140px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            opacity: 0; pointer-events: none; transform: translateY(10px);
+            transition: 0.2s ease; z-index: 10;
+        }
+        .dropdown.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .dropdown-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px; color: var(--text-muted); font-size: 0.9rem;
+            cursor: pointer; border-radius: 4px; transition: 0.1s;
+        }
+        .dropdown-item:hover { background: var(--primary-color); color: white; }
+
+        /* Status Toast */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(50px);
+            background: #ef4444; color: white; padding: 12px 24px; border-radius: 50px;
+            font-size: 0.9rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            opacity: 0; transition: 0.4s var(--ease-elastic); z-index: 2000;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .studio-container { grid-template-columns: 1fr; }
+            .sidebar { order: 2; }
+            .workspace { order: 1; }
+            .mobile-menu-btn { display: flex; z-index: 1001; }
+            .main-nav {
+                position: fixed; top: 70px; right: 0; bottom: 0; width: 75%; max-width: 300px;
+                background-color: var(--surface-color); border-left: 1px solid var(--border-color);
+                padding: 40px 30px; transform: translateX(100%); transition: transform 0.3s;
+                display: flex; flex-direction: column;
+            }
+            .main-nav.active { transform: translateX(0); }
+            .main-nav ul { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container nav-content">
+            <a href="https://audgen.pages.dev" class="logo">
+                <img src="assets/logo.png" alt="logo" class="logo-img">
+                Audgen
+            </a>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="https://audgen.pages.dev">Home</a></li>
+                    <li><a href="voice.html" class="active">Voice Generate</a></li>
+                    <li><a href="request.html">Request an API</a></li>
+                    <li><a href="info.html">Info</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn" aria-label="Toggle Menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="studio-bg">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+        </div>
+
+        <div class="container">
+            <div class="studio-container">
+                
+                <aside class="sidebar">
+                    <div class="panel">
+                        <div class="control-group">
+                            <label class="label">Voice Model</label>
+                            <select id="voiceSelect" class="input-box" onchange="toggleCustomVoice(this)">
+                                <option value="21m00Tcm4TlvDq8ikWAM">Rachel (American, Soft)</option>
+                                <option value="pNInz6obpgDQGcFmaJgB">Adam (American, Deep)</option>
+                                <option value="ErXwobaYiN019PkySvjV">Antoni (American, Well-rounded)</option>
+                                <option value="TxGEqnHWrfWFTfGW9XjX">Josh (American, Youthful)</option>
+                                <option value="custom">-- Enter Custom Voice ID --</option>
+                            </select>
+                            <input type="text" id="customVoiceId" class="input-box" style="margin-top: 10px; display: none;" placeholder="Enter ElevenLabs Voice ID">
+                        </div>
+
+                        <div class="control-group" style="margin-top: 25px;">
+                            <label class="label">Stability</label>
+                            <div class="range-wrapper">
+                                <input type="range" id="stability" min="0" max="1" step="0.1" value="0.5" oninput="updateVal('stabVal', this.value)">
+                                <span class="range-val" id="stabVal">0.5</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="label">Similarity Boost</label>
+                            <div class="range-wrapper">
+                                <input type="range" id="similarity" min="0" max="1" step="0.1" value="0.7" oninput="updateVal('simVal', this.value)">
+                                <span class="range-val" id="simVal">0.7</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <label class="label">Engine Status</label>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                            <div style="width: 8px; height: 8px; background: var(--success-color); border-radius: 50%; box-shadow: 0 0 10px var(--success-color);"></div>
+                            <span style="font-size: 0.9rem; color: var(--text-muted);">API Connected</span>
+                        </div>
+                    </div>
+                </aside>
+
+                <section class="workspace">
+                    <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
+                        <label class="label">Script Editor</label>
+                        <div class="text-editor-container">
+                            <textarea id="textInput" class="text-editor" placeholder="Type or paste your text here... The AI will perform it with human-like intonation." maxlength="5000"></textarea>
+                            <div class="char-counter"><span id="charCount">0</span>/5000</div>
+                        </div>
+                        
+                        <div class="action-bar">
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Provider: ElevenLabs v2</span>
+                            <button id="genBtn" class="btn-gen glow-effect" onclick="generateAudio()">
+                                <div class="loader"></div>
+                                <span>Generate Audio</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="playerUI" class="player-wrapper">
+                        <audio id="audioEl" style="display: none;"></audio>
+                        
+                        <button class="play-btn" id="playPauseBtn">
+                            <svg class="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <svg class="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        </button>
+                        
+                        <div class="track-info">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div class="track-title">Generated Audio Session</div>
+                            </div>
+                            <div class="progress-container" id="progressBar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                        </div>
+
+                        <div class="time-stamp" id="timeDisplay">0:00 / 0:00</div>
+
+                        <div class="menu-wrapper">
+                            <button class="menu-btn" id="menuBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                            </button>
+                            <div class="dropdown" id="dropdown">
+                                <div class="dropdown-item" onclick="downloadAudio()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    Download
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+    
+    <div id="toast" class="toast">Error message here</div>
+
+    <footer>
+        <div class="container" style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 20px 0;">
+            &copy; 2026 Audgen Studio. Powered by Abhibots API.
+        </div>
+    </footer>
+
+    <script>
+        /* =========================================
+           LOGIC: UI, API, PLAYER (FIXED FOR MP3 BINARY)
+           ========================================= */
+
+        const API_URL = '/api/generate';
+
+        // Elements
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const customVoiceId = document.getElementById('customVoiceId');
+        const genBtn = document.getElementById('genBtn');
+        const playerUI = document.getElementById('playerUI');
+        const audioEl = document.getElementById('audioEl');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const progressFill = document.getElementById('progressFill');
+        const progressBar = document.getElementById('progressBar');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const menuBtn = document.getElementById('menuBtn');
+        const dropdown = document.getElementById('dropdown');
+        const toast = document.getElementById('toast');
+
+        // State
+        let currentBlobUrl = null;
+
+        // 1. Character Counter
+        textInput.addEventListener('input', () => {
+            charCount.textContent = textInput.value.length;
+            if (textInput.value.length > 5000) charCount.style.color = '#ef4444';
+            else charCount.style.color = '#9ca3af';
+        });
+
+        // 2. Custom Voice Logic
+        function toggleCustomVoice(select) {
+            if (select.value === 'custom') {
+                customVoiceId.style.display = 'block';
+                customVoiceId.focus();
+            } else {
+                customVoiceId.style.display = 'none';
+            }
+        }
+
+        // 3. Slider Updates
+        function updateVal(id, val) {
+            document.getElementById(id).innerText = val;
+        }
+
+        // 4. Toast Notification
+        function showToast(msg, isError = true) {
+            toast.textContent = msg;
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // 5. MAIN GENERATION FUNCTION
+        async function generateAudio() {
+            const text = textInput.value.trim();
+            const voice = voiceSelect.value === 'custom' ? customVoiceId.value.trim() : voiceSelect.value;
+            const stability = parseFloat(document.getElementById('stability').value);
+            const similarity = parseFloat(document.getElementById('similarity').value);
+
+            // Validation
+            if (!text) return showToast("Please enter text to generate.");
+            if (!voice) return showToast("Please select or enter a Voice ID.");
+
+            // UI State: Loading
+            genBtn.disabled = true;
+            genBtn.classList.add('loading');
+            genBtn.querySelector('span').textContent = 'Synthesizing...';
+            playerUI.classList.remove('visible'); 
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice_id: voice,
+                        provider: 'eleven', 
+                        stability: stability,
+                        similarity: similarity
+                    })
+                });
+
+                if (!response.ok) {
+                    // Try to parse error text if possible
+                    const errText = await response.text();
+                    throw new Error(errText || 'Generation failed');
+                }
+
+                // FIXED: Receive as BLOB (Binary File) instead of JSON
+                const blob = await response.blob();
+                
+                if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl); // Clean up memory
+                currentBlobUrl = URL.createObjectURL(blob);
+                
+                setupPlayer(currentBlobUrl);
+                showToast("Audio Generated Successfully!", false);
+
+            } catch (error) {
+                console.error(error);
+                showToast("Error: " + error.message);
+            } finally {
+                genBtn.disabled = false;
+                genBtn.classList.remove('loading');
+                genBtn.querySelector('span').textContent = 'Generate Audio';
+            }
+        }
+
+        /* =========================================
+           AUDIO PLAYER ENGINE
+           ========================================= */
+        
+        function setupPlayer(url) {
+            audioEl.src = url;
+            audioEl.load();
+            playerUI.classList.add('visible');
+            updatePlayIcon(false);
+        }
+
+        function togglePlay() {
+            if (audioEl.paused) {
+                audioEl.play();
+                updatePlayIcon(true);
+            } else {
+                audioEl.pause();
+                updatePlayIcon(false);
+            }
+        }
+
+        function updatePlayIcon(isPlaying) {
+            const playIcon = playPauseBtn.querySelector('.icon-play');
+            const pauseIcon = playPauseBtn.querySelector('.icon-pause');
+            if (isPlaying) {
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+            } else {
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+            }
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        playPauseBtn.addEventListener('click', togglePlay);
+        
+        audioEl.addEventListener('timeupdate', () => {
+            const percent = (audioEl.currentTime / audioEl.duration) * 100;
+            progressFill.style.width = `${percent}%`;
+            timeDisplay.textContent = `${formatTime(audioEl.currentTime)} / ${formatTime(audioEl.duration || 0)}`;
+        });
+
+        audioEl.addEventListener('ended', () => {
+            updatePlayIcon(false);
+            progressFill.style.width = '0%';
+        });
+
+        progressBar.addEventListener('click', (e) => {
+            if (!audioEl.duration) return;
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percent = clickX / rect.width;
+            audioEl.currentTime = percent * audioEl.duration;
+        });
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', () => {
+            dropdown.classList.remove('active');
+        });
+
+        function downloadAudio() {
+            if (!currentBlobUrl) return;
+            const a = document.createElement('a');
+            a.href = currentBlobUrl;
+            a.download = `audgen_session_${Date.now()}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Downloading...", false);
+        }
+
+        /* Mobile Menu */
+        const mobileBtn = document.querySelector('.mobile-menu-btn');
+        const nav = document.querySelector('.main-nav');
+        if (mobileBtn) {
+            mobileBtn.addEventListener('click', () => {
+                nav.classList.toggle('active');
+                mobileBtn.classList.toggle('open');
+            });
+        }
+    </script>
+</body>
+</html>
