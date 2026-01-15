@@ -17,7 +17,7 @@
   <h3>
     <a href="https://audgen.pages.dev">Live Demo</a>
     <span> | </span>
-    <a href="request.html">Request API</a>
+    <a href="https://audgen.pages.dev/request">Request an API</a>
     <span> | </span>
     <a href="https://github.com/aurasqlm/audgen/issues">Report Bug</a>
   </h3>
