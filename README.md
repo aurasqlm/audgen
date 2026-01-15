@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="Audgen Logo" width="120" height="120">
+  <img src="assets/cropped-logo.png" alt="Audgen Logo" width="120" height="120">
   
   # Audgen Studio
   
